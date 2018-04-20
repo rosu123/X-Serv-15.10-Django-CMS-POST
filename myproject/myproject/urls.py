@@ -10,5 +10,6 @@ urlpatterns = [
     url(r'^(\d+)', 'cms_post.views.content'),
     url(r'^annotated/$', 'cms_post.views.barraAnnotated'),
     url(r'^annotated/(\d+)', 'cms_post.views.contentAnnotated'),
+    url(r'^edit/(\d+)', 'cms_post.views.edit_content'),
     url(r'^(.*)', 'cms_post.views.msg_error'),
 ]

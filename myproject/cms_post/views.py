@@ -38,6 +38,55 @@ def form_template():
     resp += "<input type='submit' value='Submit'></form></body>"
     return(resp)
 
+def edit_content(request, identificador):
+    if request.method == "GET":
+        #MyModel.objects.filter(pk=some_value).update(field1='some value')
+        #o
+        #obj = Product.objects.get(pk=pk)
+        #obj.name = "some_new_value"
+        #obj.save()
+        if request.user.is_authenticated():
+            resp = ("Logged in as " + request.user.username +
+                     ". <a href='/logout/'>Logout</a><br/><br/>")
+        else:
+            resp = "Not logged in. <a href='/login/'>Login</a><br/><br/>"
+        resp += "<a href='/annotated/'>Annotated</a><br/><br/>"
+        resp += form_normal()
+        try:
+            list_urls = Pages.objects.all()
+            resp += "<p>Saved URLs:</p>"
+            resp += "<ol>"
+            #print(resp)
+            for pag in list_urls:
+                resp += '<li><a href="' + str(pag.id) + '">' + pag.name + "  (" + pag.page + ')</a></li>'
+            resp += "</ol>"
+            return HttpResponse(resp)
+        except OperationalError:
+            return HttpResponse("No content", status=404)
+
+    if request.method == "POST" or request.method == "PUT":
+        if request.user.is_authenticated():
+            name = request.POST['site']
+            page = request.POST['url']
+            #print("NAME: |" + name + "|    URL: |" + url + "|")
+            url = get_absolute_url(page)
+            try:
+                pag = Pages.objects.get(page = url)
+                resp = "It already exist: "
+            except ObjectDoesNotExist:
+                pag = Pages(name = name, page = url)
+                #pag.name = newUrl
+                #pag.page = url
+                pag.save()
+                resp = "URL: "
+            resp += "<a href=" + pag.page + ">" + pag.page + "</a>"
+            resp += "</br>Shortened: <a href=" + str(pag.id) + ">" + str(pag.id) + "</a> "
+            resp += "</br><a href=/>Back</a> "
+        else:
+            resp = "You cannot modify the DB if you are not logged: "
+            resp += '<a href="/login">Login</a>'
+        return HttpResponse(resp)
+
 
 def content(request, identificador):
     if request.method != "GET":

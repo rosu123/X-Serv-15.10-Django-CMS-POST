@@ -45,29 +45,49 @@ def edit_form(identificador):
     resp += "<form action='/edit/" + str(identificador) + "' method='post'>"
     resp += "URL:<br> <input type='text' name = 'url' value='" + pag.page + "' required><br>"
     resp += "<input type='submit' value='Submit'></form></body>"
-    resp += "</br><a href=/>Back</a> "
+    resp += "</br><a href=/edit/>Back</a> "
     return(resp)
 
+def editPage(request):
+    if request.method != "GET":
+        return HttpResponse("Method not allowed", status=405)
+
+    if request.user.is_authenticated():
+        resp = ("Logged in as " + request.user.username +
+                 ". <a href='/logout/'>Logout</a><br/><br/>")
+    else:
+        resp = "Not logged in. <a href='/login/'>Login</a><br/><br/>"
+    try:
+        list_urls = Pages.objects.all()
+        resp = "<h1>Edit DB:</h1>"
+        resp += "<p>Saved URLs:</p>"
+        resp += "<ol>"
+        #print(resp)
+        for pag in list_urls:
+            resp += '<li><a href="/edit/' + str(pag.id) + '">' + pag.name + "  (" + pag.page + ')</a></li>'
+        resp += "</ol>"
+        resp += "<br>(Click on the link to edit)</br>"
+        resp += "</br><a href=/>Back</a> "
+        return HttpResponse(resp)
+    except OperationalError:
+        return HttpResponse("No content", status=404)
+
+
+
 @csrf_exempt
-def edit_content(request, identificador):
+def editContent(request, identificador):
     if request.user.is_authenticated():
         resp = ("Logged in as " + request.user.username +
                  ". <a href='/logout/'>Logout</a><br/><br/>")
 
         if request.method == "GET":
-            #MyModel.objects.filter(pk=some_value).update(field1='some value')
-            #o
-            #obj = Product.objects.get(pk=pk)
-            #obj.name = "some_new_value"
-            #obj.save()
+
             if request.user.is_authenticated():
                 resp = ("Logged in as " + request.user.username +
                          ". <a href='/logout/'>Logout</a><br/><br/>")
             else:
                 resp = "Not logged in. <a href='/login/'>Login</a><br/><br/>"
             try:
-
-
                 resp += edit_form(identificador)
                 return HttpResponse(resp)
             except ObjectDoesNotExist:
@@ -82,6 +102,7 @@ def edit_content(request, identificador):
 
             try:
                 pag = Pages.objects.filter(id = int(identificador)).update(page = url)
+                resp += "<h2>Edited!</h2>"
                 resp += edit_form(identificador)
                 return HttpResponse(resp)
             except ObjectDoesNotExist:
@@ -89,10 +110,10 @@ def edit_content(request, identificador):
                 resp += "</br><a href=/>Back</a> "
                 return HttpResponse(resp, status=404)
 
-
     else:
         resp = "Not logged in. You have to be logged to edit the DB. <a href='/login/'>Login</a><br/><br/>"
         return HttpResponse(resp)
+
 
 def content(request, identificador):
     if request.method != "GET":
@@ -123,6 +144,7 @@ def barra(request):
             for pag in list_urls:
                 resp += '<li><a href="' + str(pag.id) + '">' + pag.name + "  (" + pag.page + ')</a></li>'
             resp += "</ol>"
+            resp += '<br><a href="/edit/">Edit DB</a></br>'
             return HttpResponse(resp)
         except OperationalError:
             return HttpResponse("No content", status=404)
@@ -191,7 +213,7 @@ def barraAnnotated(request):
             for pag in list_urls:
                 content += '<li><a href="' + str(pag.id) + '">' + pag.name + "</a> --> " + pag.page + "</li>"
             content += "</ol>"
-
+            content += '<br><a href="/edit/">Edit DB</a></br>'
             template = get_template("annotated.html")
             resp = Context({'title': login, 'content': content})
 
